@@ -6,22 +6,25 @@
 
 ## 安装
 
-在源码目录构建发行包：
+从 GitHub 克隆并构建安装包，需要 Git、Node.js 22+ 和已安装的 DSH。以下命令在 PowerShell 执行，Profile 使用 learn，可按实际名称替换：
 
 ```powershell
+git clone https://github.com/Songyanglin-curious/agent-learn.git
+Set-Location agent-learn
 npm run pack
+dsh plugin --profile learn add "$(Join-Path $PWD.Path 'dist/dsh-agent-learn-0.1.0.tgz')"
 ```
 
-生成 `dist/dsh-agent-learn-0.1.0.tgz` 与 `dist/SHA256SUMS.txt`。可用 `Get-FileHash -Algorithm SHA256` 核对包哈希。
+构建只使用 Node.js 内置模块，无需先安装开发依赖。源码已有本地副本时，在仓库目录执行 `git pull --ff-only`，再运行打包与安装命令；已有本地改动时先处理，避免覆盖。
 
-通过 DSH 官方插件管理命令安装到你选择的 Profile，下面的 web 仅为示例，请按实际名称替换：
+安装后只查看第一层插件标识和名称：
 
 ```powershell
-dsh plugin --profile web add "D:\mycode\agent-learn\dist\dsh-agent-learn-0.1.0.tgz"
-dsh --profile web --dump-config
+dsh --profile learn --dump-config |
+  Where-Object { $_ -match '^- (id|name):|^  (id|name):' }
 ```
 
-确认有效配置中存在 agent-learn 条目，并按宿主需要重新加载对应实例。本仓库的构建与测试不会自动安装到日常 Profile。其他机器请使用其实际 TGZ 路径；不要绕过宿主版本兼容门禁。
+确认出现 id 为 agent-learn、name 为 dsh-agent-learn 的条目，再按宿主需要重新加载对应实例。构建还会生成 dist/SHA256SUMS.txt，可用 Get-FileHash -Algorithm SHA256 核对包哈希。构建本身不会安装插件，只有 dsh plugin add 会修改指定 Profile；不要绕过宿主版本兼容门禁。
 
 ## 开始使用
 
