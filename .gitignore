@@ -1,0 +1,10 @@
+# 验证临时材料默认不入库，保留固定导航。
+/docs/evidence/*
+!/docs/evidence/index.md
+
+# 本地依赖、构建与发行产物。
+/node_modules/
+/lib/
+/defaults/
+/dist/
+/*.tgz
