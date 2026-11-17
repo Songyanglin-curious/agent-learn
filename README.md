@@ -2,19 +2,19 @@
 
 学习外骨骼：用轻量 Hook 与可编辑 Markdown 规则，辅助学习接续、状态维护和成果沉淀。跟随学习者的问题和步幅，不强推课程、考试或逐轮记录。
 
-当前提供 **DSH 插件 `dsh-agent-learn` 0.1.1**，不包含 Codex 插件。目标运行时为 DSH 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上。宿主应已提供 agents、tools、systemPrompt，以及正常使用的文件读写工具。
+当前提供 **DSH 插件 `dsh-agent-learn` 0.1.2**。本版针对教学单元收束后未主动整理主题笔记的问题加强了教学和轮末维护规则。不包含 Codex 插件。目标运行时为 DSH 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上。宿主应已提供 agents、tools、systemPrompt，以及正常使用的文件读写工具。
 
 ## 安装
 
 直接安装 GitHub Release 的固定版本 TGZ，无需克隆源码或本地构建。需要已安装 DSH；以下 PowerShell 命令使用 learn Profile，可按实际名称替换。升级到本版也执行同一命令：
 
 ```powershell
-dsh plugin --profile learn add 'https://github.com/Songyanglin-curious/agent-learn/releases/download/v0.1.1/dsh-agent-learn-0.1.1.tgz'
+dsh plugin --profile learn add 'https://github.com/Songyanglin-curious/agent-learn/releases/download/v0.1.2/dsh-agent-learn-0.1.2.tgz'
 ```
 
-安装包与 SHA256SUMS.txt 位于 [v0.1.1 Release](https://github.com/Songyanglin-curious/agent-learn/releases/tag/v0.1.1)。远程安装不要添加 --offline。
+安装包与 SHA256SUMS.txt 位于 [v0.1.2 Release](https://github.com/Songyanglin-curious/agent-learn/releases/tag/v0.1.2)。远程安装不要添加 --offline。
 
-需要从源码构建时，在仓库目录执行 npm run pack，再安装本地 dist/dsh-agent-learn-0.1.1.tgz；构建仅依赖 Node.js 内置模块。
+需要从源码构建时，在仓库目录执行 npm run pack，再安装本地 dist/dsh-agent-learn-0.1.2.tgz；构建仅依赖 Node.js 内置模块。
 
 安装后只查看第一层插件标识和名称：
 
@@ -47,7 +47,7 @@ Agent 通过 `agent_learn_rules` 的 init 模式读取初始化规则，复用�
 
 工作区根目录同时需要 `index.md`。后续会话 cwd 应仍指向该根目录；在子目录或其他目录聊天不会自动向上查找或绑定学习工作区。标记设为 false 可停用自动检查。仅安装插件不会扫描或初始化其他目录。
 
-日常可以直接问问题或继续学习。插件提供简短教学路由；普通一次性问答无需进入持续学习流程。状态变化时维护主线、支线、证据和接续位置；形成可复用认识时按需整理笔记。无需每次显式要求记录。
+日常可以直接问问题或继续学习。插件提供简短教学路由；普通一次性问答无需进入持续学习流程。状态变化时维护主线、支线、证据和接续位置；教学单元收束并准备进入下一单元时，应更新或创建可独立查阅的主题笔记，无需另发记录命令。单元收束不等于已独立掌握，不要求每轮都生成笔记。
 
 ## 规则与配置
 

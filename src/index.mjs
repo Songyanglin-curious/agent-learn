@@ -27,7 +27,7 @@ export function apply(ctx, config = {}) {
 
   ctx.systemPrompt.section({
     name: 'agent-learn:entry', order: 650, interpolate: false,
-    text: 'Agent Learn 是学习外骨骼。用户明确开始或继续持续学习时，调用 agent_learn_rules(mode="teaching") 读取教学规则；仅用户要求建立学习工作区或持续跟踪时使用 init。普通一次性问答与非学习任务无需进入学习流程。跟随用户的问题和步幅，主动辅助接续与必要记录，不强推课程、考试或落盘。',
+    text: 'Agent Learn 是学习外骨骼。用户明确开始或继续持续学习时，调用 agent_learn_rules(mode="teaching") 读取教学规则；仅用户要求建立学习工作区或持续跟踪时使用 init。普通一次性问答与非学习任务无需进入学习流程。跟随用户的问题和步幅；在已启用学习工作区内，一个教学单元收束并转向下一单元时主动整理主题笔记和接续状态，无需用户另发记录命令。不要逐轮强制写笔记、考试或推进课程。',
   });
 
   ctx.tools.register(defineTool({

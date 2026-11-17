@@ -62,6 +62,8 @@ test('显式启用、同轮去重和下一轮恢复', t => {
   assert.equal(f.messages.length, 1);
   assert.equal(f.messages[0].source.kind, 'agent-learn');
   assert.equal(f.messages[0].source.form, 'instructions');
+  assert.match(f.messages[0].content[0].text, /教学单元收束.*主题笔记/);
+  assert.match(f.messages[0].content[0].text, /进度快照不能代替笔记/);
   f.stop(2);
   assert.equal(f.messages.length, 2);
   const sibling = { ...f.agent, session: { header: { cwd: f.cwd } } };
@@ -115,6 +117,7 @@ test('规则工具分模式抑制，返回学习根目录并保护取消', async
     const result = await f.tool.execute({ mode }, { agent: f.agent, signal: f.controller.signal });
     assert.equal(result.cwd, f.cwd);
     if (mode !== 'info') assert.ok(readFileSync(result.path, 'utf8').length > 0);
+    if (mode === 'teaching') assert.match(result.instruction, /教学单元收束时主动维护主题笔记/);
     f.stop(1);
     assert.equal(f.messages.length, ['init', 'maintain'].includes(mode) ? 0 : 1, mode);
     f.stop(2);
