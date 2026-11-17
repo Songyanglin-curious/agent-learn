@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { locateRule, rulesDirectory, ruleFiles } from '../lib/rules.mjs';
@@ -36,5 +36,20 @@ test('规则路径优先级与默认目录', () => {
   assert.equal(rulesDirectory(explicit, { AGENT_LEARN_RULES_DIR: environment }), explicit);
   assert.equal(rulesDirectory(undefined, { AGENT_LEARN_RULES_DIR: environment }), environment);
   assert.throws(() => rulesDirectory('relative', {}));
-  assert.ok(rulesDirectory(undefined, {}).endsWith(join('.agent-learn', 'dsh')));
+  assert.equal(resolve(rulesDirectory(undefined, {})), resolve(defaults));
+});
+
+// 验证默认读取不创建副本，升级立即可见，显式自定义文件继续保留。
+test('包内默认规则只读且随升级更新，自定义规则独立保留', t => {
+  const root = temporary(t);
+  const packaged = join(root, 'DSH 安装目录', 'defaults');
+  cpSync(defaults, packaged, { recursive: true });
+  const custom = join(root, '显式自定义');
+  const customPath = locateRule(packaged, custom, 'teaching');
+  writeFileSync(customPath, '# 自定义教学');
+  assert.equal(locateRule(packaged, packaged, 'teaching'), join(packaged, 'teaching.md'));
+  writeFileSync(join(packaged, 'teaching.md'), '# 新版默认教学');
+  assert.equal(readFileSync(locateRule(packaged, packaged, 'teaching'), 'utf8'), '# 新版默认教学');
+  assert.equal(readFileSync(locateRule(packaged, custom, 'teaching'), 'utf8'), '# 自定义教学');
+  assert.deepEqual(readdirSync(root).sort(), ['DSH 安装目录', '显式自定义'].sort());
 });

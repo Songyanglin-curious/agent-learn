@@ -35,6 +35,22 @@ function enable(f) {
   writeFileSync(join(f.cwd, 'index.md'), '# 学习入口');
 }
 
+// 验证未配置自定义目录时，公开工具返回实际安装包内规则路径。
+test('默认 info 返回安装包内规则', async t => {
+  const f = fixture(t, { rulesDir: undefined });
+  const previous = process.env.AGENT_LEARN_RULES_DIR;
+  delete process.env.AGENT_LEARN_RULES_DIR;
+  try {
+    const info = await f.tool.execute({ mode: 'info' }, { agent: f.agent, signal: f.controller.signal });
+    const entry = process.env.AGENT_LEARN_ENTRY ? pathToFileURL(process.env.AGENT_LEARN_ENTRY) : new URL('../lib/index.mjs', import.meta.url);
+    assert.equal(pathToFileURL(info.teaching).href, new URL('../defaults/teaching.md', entry).href);
+    assert.equal(pathToFileURL(join(info.rulesDir, 'maintain.md')).href, pathToFileURL(info.maintain).href);
+  } finally {
+    if (previous === undefined) delete process.env.AGENT_LEARN_RULES_DIR;
+    else process.env.AGENT_LEARN_RULES_DIR = previous;
+  }
+});
+
 // 验证自动检查不会初始化普通目录，并且只在同一个 Agent 的同一轮续接一次。
 test('显式启用、同轮去重和下一轮恢复', t => {
   const f = fixture(t);

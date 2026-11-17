@@ -1,6 +1,6 @@
 {
   "name": "dsh-agent-learn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH 学习外骨骼：以规则和轮次 Hook 辅助学习接续、状态维护与成果沉淀",
   "type": "module",
   "main": "./lib/index.mjs",

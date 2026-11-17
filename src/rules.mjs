@@ -1,20 +1,24 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const ruleFiles = ['principles.md', 'spec.md', 'init.md', 'teaching.md', 'maintain.md'];
 
-/** 定位独立于 agent-docs 的用户规则目录，显式配置优先于环境变量。 */
+/** 默认读取安装包内规则；仅显式配置或环境变量启用用户自定义目录。 */
 export function rulesDirectory(explicit, env = process.env) {
   const configured = explicit || env.AGENT_LEARN_RULES_DIR;
-  if (!configured) return join(homedir(), '.agent-learn', 'dsh');
+  if (!configured) return fileURLToPath(new URL('../defaults/', import.meta.url));
   if (!isAbsolute(configured)) throw new Error('rulesDir 必须为绝对路径');
   return resolve(configured);
 }
 
-/** 仅补齐缺失规则并保留用户修改；任一依赖不可读时整体回退到随包规则。 */
+/** 默认规则只读；显式自定义目录仅补齐缺失文件，损坏时整套回退随包规则。 */
 export function locateRule(defaultsDir, directory, mode, warn = () => {}) {
   if (!['init', 'teaching', 'maintain'].includes(mode)) throw new Error('未知规则类型');
+  if (resolve(directory) === resolve(defaultsDir)) {
+    for (const file of ruleFiles) readFileSync(join(defaultsDir, file), 'utf8');
+    return join(defaultsDir, `${mode}.md`);
+  }
   try {
     mkdirSync(directory, { recursive: true });
     for (const file of ruleFiles) {
