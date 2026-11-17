@@ -1,0 +1,8 @@
+{
+  "name": "codex-agent-learn",
+  "version": "0.1.0",
+  "description": "在 Codex 中辅助持续学习、进度接续与教学单元收束后的主题笔记",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "requires_local_executor": true
+}

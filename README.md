@@ -2,9 +2,9 @@
 
 学习外骨骼：用轻量 Hook 与可编辑 Markdown 规则，辅助学习接续、状态维护和成果沉淀。跟随学习者的问题和步幅，不强推课程、考试或逐轮记录。
 
-当前提供 **DSH 插件 `dsh-agent-learn` 0.1.2**。本版针对教学单元收束后未主动整理主题笔记的问题加强了教学和轮末维护规则。不包含 Codex 插件。目标运行时为 DSH 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上。宿主应已提供 agents、tools、systemPrompt，以及正常使用的文件读写工具。
+当前提供 **DSH 插件 `dsh-agent-learn` 0.1.2** 和 **Codex 本地插件 `codex-agent-learn` 0.1.0**，分别安装；DSH TGZ 不包含 Codex 插件。两者都在教学单元收束后提醒当前 Agent 整理主题笔记；学习状态判断与文件维护由当前 Agent 执行。DSH 目标运行时为 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上；Codex 本地插件需要可用的 Node.js。
 
-## 安装
+## DSH 插件安装
 
 直接安装 GitHub Release 的固定版本 TGZ，无需克隆源码或本地构建。需要已安装 DSH；以下 PowerShell 命令使用 learn Profile，可按实际名称替换。升级到本版也执行同一命令：
 
@@ -33,7 +33,7 @@ dsh plugin --profile learn remove dsh-agent-learn
 
 显式自定义规则和旧版用户文件属于用户内容，卸载不自动删除；共享包管理缓存由 DSH 管理。
 
-## 开始使用
+## DSH 开始使用
 
 在计划存放学习资料的目录打开 DSH 会话，明确告诉 Agent：
 
@@ -49,7 +49,7 @@ Agent 通过 `agent_learn_rules` 的 init 模式读取初始化规则，复用�
 
 日常可以直接问问题或继续学习。插件提供简短教学路由；普通一次性问答无需进入持续学习流程。状态变化时维护主线、支线、证据和接续位置；教学单元收束并准备进入下一单元时，应更新或创建可独立查阅的主题笔记，无需另发记录命令。单元收束不等于已独立掌握，不要求每轮都生成笔记。
 
-## 规则与配置
+## DSH 规则与配置
 
 工具 `agent_learn_rules` 提供四种模式：init 初始化、teaching 教学与阶段判断、maintain 显式补漏维护、info 查看实际路径。初始化和维护由原 Agent 读取规则执行，插件本身不生成学习内容，也不直接写学习档案。
 
@@ -61,13 +61,19 @@ Agent 通过 `agent_learn_rules` 的 init 模式读取初始化规则，复用�
 
 插件配置 enabled=false 关闭自动轮次 Hook，但保留显式规则工具和轻量教学路由。自动 Hook 还要求当前 cwd 具有有效启用标记与根索引。
 
-## 工作方式与限制
+## DSH 工作方式与限制
 
 - 正常教学规则协调节奏；每轮停止前由 Hook 最多提醒一次原 Agent 补漏，不运行独立 Agent。
 - 检查不意味着必须写文件、继续讲课或考试。用户暂停、不记录或跳过练习的要求优先。
 - 子 Agent、取消、卸载和配置异常时不续接；错误记录到宿主日志并放行正常工作。
 - 多个 Hook 可以各自续接一次；本插件不控制其他插件的提醒，也不承诺零额外模型开销。
 - 插件依赖原 Agent 的判断、文件能力及权限，不能保证学习诊断或专业知识准确。真实教学节奏与自动落盘效果仍需实际对话验收。
+
+## Codex 本地插件安装
+
+Codex 插件源码位于 [codex-plugin](codex-plugin)。它提供 `agent-learn` Skill，以及只在当前目录带有效 `.agent-learn.json` 和 `index.md` 时运行的 `SessionStart`、`Stop` Hook。`Stop` 最多续接同一轮一次，由当前 Agent 判断是否需要更新进度和主题笔记，不启动独立 Agent。
+
+将 `codex-plugin` 复制到个人插件目录，在个人 marketplace 中添加 `codex-agent-learn` 条目，再运行 `codex plugin add codex-agent-learn@personal-local`。具体路径和增量安装步骤见 [Codex 插件说明](docs/project/Codex插件.md)。安装后在 Codex 桌面端的 **Settings > Hooks** 审阅并信任本插件 Hook；Codex 会跳过未经信任的 Hook。重启桌面端后在新聊天验证。`agent_learn_rules` 是 DSH 工具，Codex 使用插件自带的 `agent-learn` Skill 直接读取规则。
 
 ## 开发
 
