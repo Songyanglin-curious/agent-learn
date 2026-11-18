@@ -45,33 +45,47 @@ test('真实宿主加载、规则入口、消息入会话、卸载和重新激�
       messages.push(message);
     } };
     const payload = { agent, turn: 1, signal: new AbortController().signal };
+    /** 用真实会话事件推进轮次，使规则工具读到宿主投影中的当前轮次。 */
+    const beginTurn = turn => session.append('turn/start', { turn });
+    beginTurn(1);
     await ctx.serial('agent/turn-stopping', payload);
-    await ctx.serial('agent/turn-stopping', payload);
-    assert.equal(messages.length, 1);
-    assert.equal(messages[0].source.kind, 'agent-learn');
+    assert.equal(messages.length, 0);
+    beginTurn(2);
     const teaching = await tool.execute({ mode: 'teaching' }, { agent, signal: payload.signal });
     assert.equal(teaching.cwd, cwd);
     assert.ok(readFileSync(teaching.path, 'utf8').length > 0);
     assert.ok(readFileSync(join(dirname(teaching.path), 'principles.md'), 'utf8').length > 0);
+    await ctx.serial('agent/turn-stopping', { ...payload, turn: 2 });
+    await ctx.serial('agent/turn-stopping', { ...payload, turn: 2 });
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].source.kind, 'agent-learn');
     if (process.env.AGENT_DOCS_ENTRY) {
       mkdirSync(join(cwd, 'docs'));
       writeFileSync(join(cwd, 'docs', 'index.md'), '# 项目文档');
       await ctx.plugin(await import(pathToFileURL(process.env.AGENT_DOCS_ENTRY).href), { rulesDir: join(cwd, 'docs-rules') });
-      await ctx.serial('agent/turn-stopping', { ...payload, turn: 2 });
-      await ctx.serial('agent/turn-stopping', { ...payload, turn: 2 });
+      beginTurn(3);
+      await tool.execute({ mode: 'teaching' }, { agent, signal: payload.signal });
+      await ctx.serial('agent/turn-stopping', { ...payload, turn: 3 });
+      await ctx.serial('agent/turn-stopping', { ...payload, turn: 3 });
       assert.equal(messages.filter(message => message.source.kind === 'agent-learn').length, 2);
       assert.equal(messages.filter(message => message.source.kind === 'agent-docs').length, 1);
     }
+    beginTurn(4);
+    await tool.execute({ mode: 'teaching' }, { agent, signal: payload.signal });
     await fiber.dispose();
     assert.equal(ctx.tools.get('agent_learn_rules'), undefined);
     assert.equal((await ctx.systemPrompt.assemble()).sections.some(section => section.name === 'agent-learn:entry'), false);
     const before = messages.filter(message => message.source.kind === 'agent-learn').length;
-    await ctx.serial('agent/turn-stopping', { ...payload, turn: 3 });
+    await ctx.serial('agent/turn-stopping', { ...payload, turn: 4 });
     assert.equal(messages.filter(message => message.source.kind === 'agent-learn').length, before);
     const reactivated = ctx.plugin(plugin, config);
     await reactivated;
     await ctx.serial('agent/turn-stopping', { ...payload, turn: 4 });
-    await ctx.serial('agent/turn-stopping', { ...payload, turn: 4 });
+    assert.equal(messages.filter(message => message.source.kind === 'agent-learn').length, before);
+    beginTurn(5);
+    await ctx.tools.get('agent_learn_rules').execute({ mode: 'teaching' }, { agent, signal: payload.signal });
+    await ctx.serial('agent/turn-stopping', { ...payload, turn: 5 });
+    await ctx.serial('agent/turn-stopping', { ...payload, turn: 5 });
     assert.equal(messages.filter(message => message.source.kind === 'agent-learn').length, before + 1);
     await reactivated.dispose();
   } finally { await ctx.fiber.dispose(); }
