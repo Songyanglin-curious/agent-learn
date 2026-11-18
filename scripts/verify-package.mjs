@@ -5,6 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, sym
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ruleFiles } from '../src/rules.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -20,12 +21,12 @@ function verify() {
     const tar = process.env.AGENT_LEARN_TAR || 'tar';
     const entries = execFileSync(tar, ['-tf', archive], { encoding: 'utf8', timeout: 10000 }).trim().split(/\r?\n/);
     for (const entry of entries) assert.ok(entry.startsWith('package/') && !entry.split('/').includes('..'), `包路径越界：${entry}`);
-    for (const file of ['package.json', 'README.md', 'cordis.patch.yml', 'lib/index.mjs', 'lib/rules.mjs', 'lib/workspace.mjs', ...['principles', 'spec', 'init', 'teaching', 'maintain'].map(name => `defaults/${name}.md`)]) assert.ok(entries.includes(`package/${file}`), `缺少发行文件：${file}`);
+    for (const file of ['package.json', 'README.md', 'cordis.patch.yml', 'lib/index.mjs', 'lib/rules.mjs', 'lib/workspace.mjs', ...ruleFiles.map(name => `defaults/${name}`)]) assert.ok(entries.includes(`package/${file}`), `缺少发行文件：${file}`);
     assert.ok(entries.every(entry => !/^package\/(node_modules|src|tests|docs|dist)\//.test(entry)), '发行包不应包含开发目录或机器依赖');
     execFileSync(tar, ['-xf', archive, '-C', temp], { timeout: 10000 });
     const unpacked = join(temp, 'package');
     for (const file of ['index.mjs', 'rules.mjs', 'workspace.mjs']) assert.deepEqual(readFileSync(join(unpacked, 'lib', file)), readFileSync(join(root, 'src', file)));
-    for (const name of ['principles', 'spec', 'init', 'teaching', 'maintain']) assert.deepEqual(readFileSync(join(unpacked, 'defaults', `${name}.md`)), readFileSync(join(root, 'rules', `${name}.md`)));
+    for (const file of ruleFiles) assert.deepEqual(readFileSync(join(unpacked, 'defaults', file)), readFileSync(join(root, 'rules', file)));
     assert.equal(JSON.parse(readFileSync(join(unpacked, 'package.json'), 'utf8')).version, manifest.version);
     // 独立解压包只复用已核对的宿主依赖，不通过原仓库路径加载运行代码或默认规则。
     symlinkSync(realpathSync(join(root, 'node_modules')), join(unpacked, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');

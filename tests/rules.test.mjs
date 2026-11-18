@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { locateRule, rulesDirectory, ruleFiles } from '../lib/rules.mjs';
 import { temporary } from './helpers.mjs';
@@ -16,6 +16,24 @@ test('完整规则首次创建、用户文件不覆盖与实时重读', t => {
   writeFileSync(path, '# 用户自定义教学');
   assert.equal(locateRule(defaults, directory, 'teaching'), path);
   assert.equal(readFileSync(path, 'utf8'), '# 用户自定义教学');
+});
+
+// 验证升级旧规则目录时，教学入口与范例都可在原目录使用，定制规则仍由用户维护。
+test('旧版自定义目录补齐规划规则和范例', t => {
+  const directory = temporary(t);
+  for (const file of ['principles.md', 'spec.md', 'init.md', 'teaching.md', 'maintain.md']) {
+    cpSync(join(defaults, file), join(directory, file));
+  }
+  const customTeaching = '# 既有自定义教学';
+  writeFileSync(join(directory, 'teaching.md'), customTeaching);
+
+  const teachingPath = locateRule(defaults, directory, 'teaching');
+  assert.equal(readFileSync(teachingPath, 'utf8'), customTeaching);
+  const planningPath = join(dirname(teachingPath), 'planning.md');
+  const planning = readFileSync(planningPath, 'utf8');
+  assert.equal(planning, readFileSync(join(defaults, 'planning.md'), 'utf8'));
+  assert.match(planning, /\]\(planning-example\.md\)/);
+  assert.equal(readFileSync(join(dirname(planningPath), 'planning-example.md'), 'utf8'), readFileSync(join(defaults, 'planning-example.md'), 'utf8'));
 });
 
 // 验证任一依赖不可读时回退整个随包规则目录，避免混用损坏的相对引用。

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { temporary } from './helpers.mjs';
 
@@ -24,7 +24,10 @@ function fixture(t, config = {}) {
   };
   plugin.apply(ctx, { rulesDir: join(cwd, 'rules'), ...config });
   const messages = [];
-  const agent = { session: { header: { cwd, delegationDepth: 0 } }, steer: message => messages.push(message) };
+  const agent = {
+    session: { header: { cwd, delegationDepth: 0 }, deriveMessages: () => messages },
+    steer: message => messages.push(message),
+  };
   const controller = new AbortController();
   /** 模拟宿主当前轮次，通过公开工具进入专题教学。 */
   const teach = (turn, currentAgent = agent) => {
@@ -82,7 +85,7 @@ test('本轮教学、同轮去重和普通答疑放行', async t => {
   await f.teach(5);
   f.stop(5);
   assert.equal(f.messages.length, 2);
-  const sibling = { ...f.agent, session: { header: { cwd: f.cwd } } };
+  const sibling = { ...f.agent, session: { header: { cwd: f.cwd }, deriveMessages: () => [] } };
   f.stop(5, sibling);
   assert.equal(f.messages.length, 2);
   await f.teach(5, sibling);
@@ -144,6 +147,10 @@ test('规则工具按模式登记或跳过补漏，返回学习根目录并保�
     if (mode === 'teaching') {
       assert.match(result.instruction, /建立或恢复专题计划/);
       assert.match(result.instruction, /阶段综合与专题总综合/);
+      const planningPath = join(dirname(result.path), 'planning.md');
+      assert.ok(result.instruction.includes(JSON.stringify(planningPath)));
+      assert.match(readFileSync(result.path, 'utf8'), /\]\(planning\.md\)/);
+      assert.match(readFileSync(planningPath, 'utf8'), /\]\(planning-example\.md\)/);
       assert.doesNotMatch(result.instruction, /单元收束|主题笔记/);
     }
     f.stop(1);

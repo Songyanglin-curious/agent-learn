@@ -2,19 +2,19 @@
 
 学习外骨骼：用轻量 Hook 与可编辑 Markdown 规则，辅助学习接续、状态维护和成果沉淀。跟随学习者的问题和步幅，不强推课程、考试或逐轮记录。
 
-当前发布版本为 **DSH 插件 `dsh-agent-learn` 0.1.2** 和 **Codex 本地插件 `codex-agent-learn` 0.1.0**，分别安装；DSH TGZ 不包含 Codex 插件。仓库中的 DSH 规则已改为以独立专题计划组织学习，尚未发布到 GitHub Release；Codex 规则未同步改变。学习判断与资料维护均由当前 Agent 执行。DSH 目标运行时为 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上；Codex 本地插件需要可用的 Node.js。
+当前发布版本为 **DSH 插件 `dsh-agent-learn` 0.1.3** 和 **Codex 本地插件 `codex-agent-learn` 0.1.0**，分别安装；DSH TGZ 不包含 Codex 插件。DSH 规则包含独立的专题规划、阶段教学与轮末补漏。学习判断与资料维护均由当前 Agent 执行。DSH 目标运行时为 0.2.2-rc.1、Cordis 4.1.0、Node.js 22 及以上；Codex 本地插件需要可用的 Node.js。
 
 ## DSH 插件安装
 
 直接安装 GitHub Release 的固定版本 TGZ，无需克隆源码或本地构建。需要已安装 DSH；以下 PowerShell 命令使用 learn Profile，可按实际名称替换。升级到本版也执行同一命令：
 
 ```powershell
-dsh plugin --profile learn add 'https://github.com/Songyanglin-curious/agent-learn/releases/download/v0.1.2/dsh-agent-learn-0.1.2.tgz'
+dsh plugin --profile learn add 'https://github.com/Songyanglin-curious/agent-learn/releases/download/v0.1.3/dsh-agent-learn-0.1.3.tgz'
 ```
 
-安装包与 SHA256SUMS.txt 位于 [v0.1.2 Release](https://github.com/Songyanglin-curious/agent-learn/releases/tag/v0.1.2)。远程安装不要添加 --offline。
+安装包与 SHA256SUMS.txt 位于 [v0.1.3 Release](https://github.com/Songyanglin-curious/agent-learn/releases/tag/v0.1.3)。远程安装不要添加 --offline。
 
-需要从源码构建时，在仓库目录执行 npm run pack，再安装本地 dist/dsh-agent-learn-0.1.2.tgz；构建仅依赖 Node.js 内置模块。
+需要从源码构建时，在仓库目录执行 npm run pack，再安装本地 dist/dsh-agent-learn-0.1.3.tgz；构建仅依赖 Node.js 内置模块。
 
 安装后只查看第一层插件标识和名称：
 
@@ -55,7 +55,7 @@ Agent 通过 `agent_learn_rules` 的 init 模式读取初始化规则，复用�
 
 默认直接读取 DSH Profile 安装包内的 `defaults/`，随包升级，不再创建 `C:/Users/DELL/.agent-learn` 或其他用户根目录副本。调用 `agent_learn_rules(mode="info")` 查看实际路径。优先级为插件配置 rulesDir、环境变量 AGENT_LEARN_RULES_DIR、包内 defaults。
 
-需要自定义时，显式将 rulesDir 或 AGENT_LEARN_RULES_DIR 设为绝对目录，建议选择 DSH_HOME 下的 agent-learn/rules。只有显式自定义目录会补齐缺失的五份规则，已有文件保留；依赖不可读时整套回退包内 defaults。自定义内容不会随包升级，修改后下次读取生效；默认包内文件由包管理器管理，请勿直接编辑。
+需要自定义时，显式将 rulesDir 或 AGENT_LEARN_RULES_DIR 设为绝对目录，建议选择 DSH_HOME 下的 agent-learn/rules。显式自定义目录会补齐缺失的规则及范例，已有文件保留。依赖不可读时整套回退包内 defaults。自定义文件修改后下次读取生效，随包升级时保留已有内容。
 
 旧版 `~/.agent-learn/dsh` 不再自动读取，也不自动迁移或删除。要继续使用旧自定义内容，请自行移至 DSH 目录并显式配置新路径；若仍配置旧路径或环境变量，请清除或修改它，才能使用新版默认规则。
 
@@ -64,6 +64,7 @@ Agent 通过 `agent_learn_rules` 的 init 模式读取初始化规则，复用�
 ## DSH 工作方式与限制
 
 - 正常教学规则协调节奏。当前源码只在进入专题教学的轮次停止前最多提醒一次原 Agent 补漏，普通答疑直接放行。
+- 首次进入可自动补漏的专题教学时，`teaching` 随工具结果加载维护规则。后续 Hook 按标题和版本引用有效会话历史里已有的正文，正文缺失或变更时才补载。
 - 检查不意味着必须写文件、继续讲课或考试。用户暂停、不记录或跳过练习的要求优先。
 - 子 Agent、取消、卸载和配置异常时不续接；错误记录到宿主日志并放行正常工作。
 - 专题教学轮可能多一次模型续接，由原 Agent 检查是否确有遗漏。其他插件的 Hook 可独立续接。
@@ -85,6 +86,6 @@ npm run pack
 npm run verify:package
 ```
 
-src 是运行代码源，rules 是五份默认规则的唯一源；build 生成 lib 与 defaults。verify:package 需要系统 tar 和匹配的本地宿主依赖，会独立解压 TGZ、比对源码与规则、验证宿主加载并检查两项关键行为断言确实可失败。测试覆盖公开事件接口和真实 Cordis/DSH 服务，不把测试 Agent 当成真实模型闭环。
+src 是运行代码源，rules 是默认规则与规划范例的唯一源，build 生成 lib 与 defaults。verify:package 需要系统 tar 和匹配的本地宿主依赖，会独立解压 TGZ、比对源码与规则、验证宿主加载并检查两项关键行为断言确实可失败。测试覆盖公开事件接口和真实 Cordis/DSH 服务，不把测试 Agent 当成真实模型闭环。
 
 开发文档位于源码仓库 docs/index.md；独立 TGZ 只携带运行代码、默认规则、配置补丁和本说明，不依赖仓库之外的文件。
